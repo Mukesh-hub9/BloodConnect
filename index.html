@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodConnect | Donate Blood, Save Lives</title>
+
+    <!-- Google Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <script>
+        try {
+            if (localStorage.getItem('bc_theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        } catch (e) {
+            console.warn('Theme init failed', e);
+        }
+    </script>
+    <div class="emergency-banner">
+        🚨 URGENT: O- Negative blood needed immediately at City General Hospital! <a href="#"
+            onclick="app.showSection('donor')">Donate Now</a>
+    </div>
+    <nav class="glass-nav">
+        <div class="logo" onclick="app.showSection('home')" id="navLogo">
+            <i class="ph-fill ph-drop text-primary"></i>
+            BloodConnect
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn" onclick="app.toggleDarkMode()" id="btnThemeToggle"><i class="ph ph-moon"></i></button>
+            <button class="nav-btn"onclick="app.showSection('home')"id="navHome"></i>Home</button>
+            <button class="nav-btn" onclick="app.showSection('donor')" id="navBecomeDonor">Become a Donor</button>
+            <button class="nav-btn" onclick="app.showSection('urgent-requests')" id="navUrgentRequests">Urgent Requests</button>
+            <button class="nav-btn" onclick="app.showSection('request')" id="navFindDonors">Find Donors</button>
+            <button class="nav-btn" onclick="app.showSection('profile')" id="navProfile">Profile & Journey</button>
+            <button class="nav-btn admin-btn" onclick="app.showSection('admin')" id="navAdmin">Hospital Portal</button>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <!-- HOME SECTION -->
+        <section id="home" class="section active fade-in">
+            <div class="hero">
+                <div class="hero-text">
+                    <h1>Donate Blood.<br><span class="text-primary">Save Lives.</span></h1>
+                    <p>Every 2 seconds someone needs blood. Your single donation can save up to <strong>3
+                            lives</strong>.</p>
+                    <button class="btn btn-primary mt-4" onclick="app.showSection('donor')">
+                        <i class="ph ph-heart"></i> Become a Donor
+                    </button>
+                </div>
+                <div class="hero-img">
+                    <img src="https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=600&q=80"
+                        alt="Blood Donation">
+                    <img src="https://www.pixazo.ai/cdn-cgi/image/width=640,quality=80,format=auto/wp-content/generated-slides/poster--blood-donation/1.png"
+                        alt="Blood Donation">
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card glass">
+                    <div class="stat-icon bg-red-light text-primary"><i class="ph ph-users"></i></div>
+                    <div class="stat-info">
+                        <h2 class="counter" data-target="1250">0</h2>
+                        <p>Registered Donors</p>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon bg-green-light text-green"><i class="ph ph-heartbeat"></i></div>
+                    <div class="stat-info">
+                        <h2 class="counter" data-target="342">0</h2>
+                        <p>Lives Saved</p>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon bg-blue-light text-blue"><i class="ph ph-first-aid"></i></div>
+                    <div class="stat-info">
+                        <h2 class="counter" data-target="58">0</h2>
+                        <p>Requests Today</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-actions-grid reveal">
+                <button class="quick-action-card glass" onclick="app.showSection('donor')">
+                    <div class="quick-action-icon bg-primary-light text-primary"><i class="ph ph-hand-heart"></i></div>
+                    <div>
+                        <h3>Become a Donor</h3>
+                        <p>Register quickly and stay on call for urgent needs.</p>
+                    </div>
+                    <span class="quick-action-badge"><strong id="liveOnlineCount">5</strong> Live Donors Online</span>
+                </button>
+                <button class="quick-action-card glass" onclick="app.showSection('request')">
+                    <div class="quick-action-icon bg-blue-light text-blue"><i class="ph ph-magnifying-glass"></i></div>
+                    <div>
+                        <h3>Find Compatible Donors</h3>
+                        <p>Search nearby donors with smart compatibility matching.</p>
+                    </div>
+                    <span class="quick-action-badge"><strong id="quickAvailableCount">0</strong> Available Matches</span>
+                </button>
+                <button class="quick-action-card glass" onclick="app.showSection('urgent-requests')">
+                    <div class="quick-action-icon bg-orange-light text-orange"><i class="ph ph-flame"></i></div>
+                    <div>
+                        <h3>Emergency Broadcast</h3>
+                        <p>Post urgent blood requests to the entire donor community.</p>
+                    </div>
+                    <span class="quick-action-badge"><strong id="quickUrgentCount">0</strong> Open Requests</span>
+                </button>
+                <button class="quick-action-card glass" onclick="app.toggleMap()">
+                    <div class="quick-action-icon bg-green-light text-green"><i class="ph ph-map-trifold"></i></div>
+                    <div>
+                        <h3>Live Donor Map</h3>
+                        <p>View active donor locations and availability instantly.</p>
+                    </div>
+                    <span class="quick-action-badge"><strong id="quickMapCount">0</strong> Donor Pins</span>
+                </button>
+            </div>
+
+            <div class="inventory-section mt-5 reveal">
+                <h2 class="section-title">Live Blood Inventory</h2>
+                <div class="inventory-grid" id="liveInventoryGrid"></div>
+            </div>
+
+            <div class="info-section mt-5 reveal">
+                <h2 class="section-title">Why Blood Donation Matters</h2>
+                <div class="info-grid">
+                    <div class="info-card glass">
+                        <i class="ph ph-clock text-primary"></i>
+                        <h3>Every 2 Seconds</h3>
+                        <p>Someone in the world needs blood every 2 seconds.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-heart text-primary"></i>
+                        <h3>Save 3 Lives</h3>
+                        <p>One donation can help up to three different patients.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-ambulance text-primary"></i>
+                        <h3>Emergency Needs</h3>
+                        <p>Blood is required for surgeries, accidents, and cancer treatment.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-shield-check text-primary"></i>
+                        <h3>Safe & Simple</h3>
+                        <p>The process is safe and takes only 10–15 minutes.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-hospital"></i>
+                        <h3>Child awaiting O- transfusion</h3>
+                        <p>At City Children’s Hospital, a young child is critically in need of O- blood for an emergency surgery.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-bandaid"></i>
+                        <h3>Postpartum hemorrhage support</h3>
+                        <p>A new mother needs A+ units urgently to recover after unexpected complications in maternity care.</p>
+                    </div>
+                    <div class="info-card glass">
+                        <i class="ph ph-heartbeat"></i>
+                        <h3>Cancer patient platelet transfusion</h3>
+                        <p>Platelets are required today for a teenager undergoing chemotherapy who depends on timely donations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-stories mt-5 reveal">
+                <h2 class="section-title">Success Stories</h2>
+                <div class="story-grid">
+                    <div class="story-card glass">
+                        <h3>Saved her first breath</h3>
+                        <p>When Priya’s baby arrived early, a timely donation turned a frightened night into a first smile.</p>
+                    </div>
+                    <div class="story-card glass">
+                        <h3>Hope returned to a father</h3>
+                        <p>After a serious accident, Ajay’s family received the blood support they needed to keep him home for another festival.</p>
+                    </div>
+                    <div class="story-card glass">
+                        <h3>A second chance to a student</h3>
+                        <p>A college student recovered from a sudden illness thanks to donors who answered a last-minute request.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DONOR SECTION -->
+        <section id="donor" class="section">
+            <button class="btn btn-secondary back-btn" onclick="app.showSection('home')"><i
+                    class="ph ph-arrow-left"></i> Back to Home</button>
+            <div class="form-card glass wizard-card">
+                <h2>Donor Registration</h2>
+                <div class="wizard-progress">
+                    <div class="progress-step active" id="pstep1">1</div>
+                    <div class="progress-line"></div>
+                    <div class="progress-step" id="pstep2">2</div>
+                    <div class="progress-line"></div>
+                    <div class="progress-step" id="pstep3">3</div>
+                </div>
+                <form id="donorForm" onsubmit="event.preventDefault(); app.registerDonor();">
+                    <!-- Step 1: Basic Info -->
+                    <div class="wizard-step active" id="step1">
+                        <h3>Step 1: Basic Information</h3>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input id="donorName" type="text" placeholder="e.g. John Doe" required class="glass-input">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Age (18+)</label>
+                                <input id="donorAge" type="number" min="18" placeholder="Age" required
+                                    class="glass-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Weight (lbs)</label>
+                                <input id="donorWeight" type="number" min="90" placeholder="Must be > 110 lbs" required
+                                    class="glass-input">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary w-full mt-3" onclick="app.nextWizardStep(1)">Next
+                            <i class="ph ph-arrow-right"></i></button>
+                    </div>
+
+                    <!-- Step 2: Medical & Component -->
+                    <div class="wizard-step" id="step2">
+                        <h3>Step 2: Medical Pre-Screening</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Component to Donate</label>
+                                <select id="donorComponent" required class="glass-select w-full">
+                                    <option value="Whole Blood">Whole Blood (56 days cooldown)</option>
+                                    <option value="Platelets">Platelets (7 days cooldown)</option>
+                                    <option value="Plasma">Plasma (28 days cooldown)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Group</label>
+                                <select id="donorBlood" required class="glass-select w-full">
+                                    <option value="" disabled selected>Select Group</option>
+                                    <option>A+</option>
+                                    <option>A-</option>
+                                    <option>B+</option>
+                                    <option>B-</option>
+                                    <option>AB+</option>
+                                    <option>AB-</option>
+                                    <option>O+</option>
+                                    <option>O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label"><input type="checkbox" id="chkHealth" required> I am feeling
+                                healthy and well today.</label>
+                            <label class="checkbox-label"><input type="checkbox" id="chkTattoo" required> I have NOT had
+                                a tattoo or piercing in the last 3 months.</label>
+                        </div>
+                        <div class="form-row mt-3">
+                            <button type="button" class="btn btn-secondary w-full" onclick="app.prevWizardStep(2)"><i
+                                    class="ph ph-arrow-left"></i> Back</button>
+                            <button type="button" class="btn btn-primary w-full" onclick="app.nextWizardStep(2)">Next <i
+                                    class="ph ph-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Contact & Consent -->
+                    <div class="wizard-step" id="step3">
+                        <h3>Step 3: Contact & Consent</h3>
+                        <div class="form-group">
+                            <label>City / Area</label>
+                            <input id="donorCity" type="text" placeholder="e.g. Rajahmundry" required
+                                class="glass-input">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Availability</label>
+                                <select id="donorAvailability" class="glass-select w-full">
+                                    <option value="true">Available to Donate</option>
+                                    <option value="false">Currently Unavailable</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input id="donorPhone" type="tel" placeholder="Phone Number" required
+                                    class="glass-input">
+                            </div>
+                        </div>
+                        <div class="form-row mt-3">
+                            <button type="button" class="btn btn-secondary w-full" onclick="app.prevWizardStep(3)"><i
+                                    class="ph ph-arrow-left"></i> Back</button>
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="ph ph-check-circle"></i> Register as Donor
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- URGENT REQUESTS SECTION -->
+        <section id="urgent-requests" class="section">
+            <button class="btn btn-secondary back-btn" onclick="app.showSection('home')" id="btnUrgentBackHome"><i
+                    class="ph ph-arrow-left"></i> Back to Home</button>
+            
+            <div class="urgent-container">
+                <!-- Left: Post Urgent Request Form -->
+                <div class="form-card glass no-margin">
+                    <h2>Request Emergency Blood</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px; text-align:center;">
+                        Hospitals and patients can broadcast immediate blood requirements to nearby registered donors.
+                    </p>
+                    <form id="requestForm" onsubmit="event.preventDefault(); app.postEmergencyRequest();">
+                        <div class="form-group">
+                            <label>Hospital / Clinic Name</label>
+                            <input id="reqHospitalName" type="text" placeholder="e.g. City General Hospital" required class="glass-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Patient Name (Optional)</label>
+                            <input id="reqPatientName" type="text" placeholder="e.g. Jane Doe" class="glass-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Scenario Description (Optional)</label>
+                            <textarea id="reqScenario" rows="3" placeholder="e.g. Road accident with multiple injuries, or postpartum hemorrhage support" class="glass-input"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Blood Group Required</label>
+                                <select id="reqBlood" required class="glass-select w-full">
+                                    <option value="" disabled selected>Select Group</option>
+                                    <option>A+</option>
+                                    <option>A-</option>
+                                    <option>B+</option>
+                                    <option>B-</option>
+                                    <option>AB+</option>
+                                    <option>AB-</option>
+                                    <option>O+</option>
+                                    <option>O-</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Component Required</label>
+                                <select id="reqComponentType" required class="glass-select w-full">
+                                    <option value="Whole Blood">Whole Blood</option>
+                                    <option value="Platelets">Platelets</option>
+                                    <option value="Plasma">Plasma</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Urgency Level</label>
+                                <select id="reqUrgency" required class="glass-select w-full">
+                                    <option value="Critical">Critical (Immediate match)</option>
+                                    <option value="Urgent">Urgent (Within 12 hours)</option>
+                                    <option value="Normal">Normal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Units Required</label>
+                                <input id="reqUnits" type="number" min="1" max="10" value="1" required class="glass-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>City / Location</label>
+                            <input id="reqCity" type="text" placeholder="e.g. Rajahmundry" required class="glass-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Hospital Full Address</label>
+                            <input id="reqAddress" type="text" placeholder="e.g. Main Street, Sector 4" required class="glass-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Phone Number</label>
+                            <input id="reqPhone" type="tel" placeholder="e.g. +91 98765 43210" required class="glass-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full mt-3" id="btnSubmitRequest">
+                            <i class="ph ph-broadcast"></i> Broadcast Emergency Request
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right: Active Requests Feed -->
+                <div class="board-card glass">
+                    <div class="board-header">
+                        <h2>Active Emergency Requests</h2>
+                        <div class="filter-row">
+                            <div class="filter-box">
+                                <i class="ph ph-map-pin filter-icon"></i>
+                                <input type="text" id="boardFilterCity" placeholder="Filter by city..." class="board-filter-input" onkeyup="app.filterRequestBoard()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="board-list" id="requestBoardList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- REQUEST SECTION -->
+        <section id="request" class="section">
+            <button class="btn btn-secondary back-btn" onclick="app.showSection('home')"><i
+                    class="ph ph-arrow-left"></i> Back to Home</button>
+            <div class="form-card glass">
+                <h2>Find Blood</h2>
+                <form onsubmit="event.preventDefault(); app.initiateSearch();">
+                    <div class="form-group">
+                        <label>Blood Group Required</label>
+                        <select id="searchBlood" required class="glass-select w-full">
+                            <option value="" disabled selected>Select Group</option>
+                            <option>A+</option>
+                            <option>A-</option>
+                            <option>B+</option>
+                            <option>B-</option>
+                            <option>AB+</option>
+                            <option>AB-</option>
+                            <option>O+</option>
+                            <option>O-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Component Required</label>
+                        <select id="reqComponent" required class="glass-select w-full">
+                            <option value="Whole Blood">Whole Blood</option>
+                            <option value="Platelets">Platelets</option>
+                            <option value="Plasma">Plasma</option>
+                            <option value="Double Red Cells">Double Red Cells (Power Red)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location / City</label>
+                        <input id="searchLocation" type="text" placeholder="Enter City to search..." required
+                            class="glass-input">
+                    </div>
+                    <div class="form-group checkbox-group" style="margin-top: 10px; margin-bottom: 20px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="chkCompatibility" style="width:18px; height:18px; accent-color:var(--primary);"> 
+                            <span>Smart Compatibility Mode (Include compatible blood groups)</span>
+                        </label>
+                        <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Compatible donors can still safely give to your selected blood group and help you reach patients faster.</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full mt-3">
+                        <i class="ph ph-magnifying-glass"></i> Search Nearby Donors
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- PROFILE & JOURNEY SECTION -->
+        <section id="profile" class="section">
+            <div class="dashboard-header">
+                <div>
+                    <h2 class="page-title">Donor Profile & Journey</h2>
+                    <p class="page-subtitle">Track your impact, eligibility, and current donation status</p>
+                </div>
+                <div class="profile-header-actions">
+                    <button type="button" class="btn btn-secondary profile-action-btn active" id="profileHistoryBtn" onclick="app.setProfileView('history')">
+                        <i class="ph ph-clock"></i> Donation History
+                    </button>
+                    <button type="button" class="btn btn-secondary profile-action-btn" id="profileActivityBtn" onclick="app.setProfileView('activity')">
+                        <i class="ph ph-list"></i> Activity Feed
+                    </button>
+                    <button type="button" class="btn btn-secondary profile-action-btn" id="profileNotificationsBtn" onclick="app.setProfileView('notifications')">
+                        <i class="ph ph-bell"></i> Notifications
+                        <span class="notification-badge" id="profileNotificationsBadge">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-header-bar">
+                <div class="profile-summary-grid">
+                    <div class="summary-card glass">
+                        <h4>Total Donations</h4>
+                        <strong id="profileDonationCount">0</strong>
+                        <p>Records in your donation timeline</p>
+                    </div>
+                    <div class="summary-card glass">
+                        <h4>Open Requests</h4>
+                        <strong id="profileOpenRequests">0</strong>
+                        <p>Current active hospital requests in your area</p>
+                    </div>
+                    <div class="summary-card glass">
+                        <h4>Live Activity</h4>
+                        <strong id="profileActivityCount">0</strong>
+                        <p>Recent profile & request events</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+                <!-- Gamification & Stats -->
+                <div class="card glass profile-stats">
+                    <div class="card-header">
+                        <h2>Your Impact</h2>
+                    </div>
+                    <div class="impact-score">
+                        <h1>12</h1>
+                        <p>Lives Saved</p>
+                    </div>
+                    <div class="badges-container">
+                        <div class="badge-item" title="Donated 3+ times"><i class="ph-fill ph-medal text-primary"></i>
+                            Hero Donor</div>
+                        <div class="badge-item" title="Donated Platelets"><i class="ph-fill ph-drop text-orange"></i>
+                            Platelet Pioneer</div>
+                        <div class="badge-item" title="Passed health screening"><i
+                                class="ph-fill ph-check-circle text-green"></i> Pre-Screened</div>
+                    </div>
+                    <div class="card glass mt-4" id="donationHistorySection" style="display:none;">
+                        <h3 style="margin-bottom:16px;">Donation Timeline</h3>
+                        <div id="donationHistoryList" class="history-list">
+                            <p style="color: var(--text-muted);">No donation events recorded yet. Register or respond to an urgent request to get started.</p>
+                        </div>
+                    </div>
+                    <div class="card glass mt-4" id="profileActivitySection" style="display:none;">
+                        <h3 style="margin-bottom:16px;">Live Activity Feed</h3>
+                        <div id="profileActivityFeed" class="history-list">
+                            <p style="color: var(--text-muted);">No live profile activity yet.</p>
+                        </div>
+                    </div>
+                    <div class="card glass mt-4" id="profileNotificationsSection" style="display:none;">
+                        <h3 style="margin-bottom:16px;">Notification Center</h3>
+                        <div id="profileNotificationFeed" class="history-list">
+                            <p style="color: var(--text-muted);">No notifications yet.</p>
+                        </div>
+                    </div>
+                    <div id="profileEligibility" class="eligibility-box mt-3" style="display:none;">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Journey Tracker -->
+                <div class="card glass journey-card">
+                    <div class="card-header">
+                        <h2>Live Donation Journey</h2>
+                        <span id="journeyComponentBadge" class="status-badge status-urgent">Platelets • ID: #8892</span>
+                    </div>
+                    <div class="stepper-container">
+                        <div class="step completed">
+                            <div class="step-icon"><i class="ph ph-syringe"></i></div>
+                            <p>Donated</p>
+                            <small>Oct 12</small>
+                        </div>
+                        <div class="step-line active"></div>
+                        <div class="step completed">
+                            <div class="step-icon"><i class="ph ph-flask"></i></div>
+                            <p>Testing</p>
+                            <small>Oct 13</small>
+                        </div>
+                        <div class="step-line active"></div>
+                        <div class="step active-step">
+                            <div class="step-icon"><i class="ph ph-spinner-gap"></i></div>
+                            <p>Processing</p>
+                            <small>In Progress</small>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step">
+                            <div class="step-icon"><i class="ph ph-thermometer-cold"></i></div>
+                            <p>Storage</p>
+                            <small>Pending</small>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step">
+                            <div class="step-icon"><i class="ph ph-heartbeat"></i></div>
+                            <p>Transfused</p>
+                            <small>Pending</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESULTS SECTION -->
+        <section id="results" class="section">
+            <div class="dashboard-header">
+                <div>
+                    <h2 class="page-title">Available Matches Near You</h2>
+                    <p class="page-subtitle" id="searchFeedback">Showing available donors</p>
+                </div>
+                <button class="btn btn-secondary" onclick="app.toggleMap()">
+                    <i class="ph ph-map-trifold"></i> Toggle Map View
+                </button>
+            </div>
+
+            <div id="mapContainer" class="map-wrapper glass" style="display:none;">
+                <div id="map" class="map-canvas"></div>
+            </div>
+
+            <div class="results-grid" id="resultsGrid">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+        <!-- ADMIN SECTION -->
+        <section id="admin" class="section">
+            <div class="form-card glass" id="adminLoginBox">
+                <h2>Admin Login</h2>
+                <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;"></p>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="adminUser" placeholder="Username" class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="adminPass" placeholder="Password" class="glass-input">
+                </div>
+                <button class="btn btn-primary w-full mt-2" onclick="app.adminLogin()">Login</button>
+            </div>
+
+            <div id="adminPanel" style="display:none;">
+                <div class="dashboard-header">
+                    <div>
+                        <h2 class="page-title" id="adminPortalTitle">Hospital & Admin Portal</h2>
+                        <p class="page-subtitle" id="adminPortalSubtitle">Manage Registered Donors and Emergency Requests</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="app.logoutAdmin()" id="btnLogoutAdmin">Logout</button>
+                </div>
+                
+                <div class="portal-grid">
+                    <!-- Left Column: Hospital Requests Manager -->
+                    <div class="card glass">
+                        <h3 style="margin-bottom:10px;"><i class="ph ph-hand-heart"></i> Hospital Emergency Requests</h3>
+                        <p style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">Track urgent broadcasts and mark them as Fulfilled when donors are matched.</p>
+                        <div id="hospitalRequestsList" class="admin-list">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Admin Donors Directory -->
+                    <div class="card glass">
+                        <h3 style="margin-bottom:10px;"><i class="ph ph-users-three"></i> Registered Donors Directory</h3>
+                        <p style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">Verify all registered blood donors and their availability status.</p>
+                        <div id="adminDonorList" class="admin-list">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="profilePopupOverlay" class="profile-popup-overlay" style="display:none;" onclick="if(event.target===this) app.closeProfilePopup()">
+        <div class="profile-popup-card glass">
+            <div class="profile-popup-header">
+                <div>
+                    <h3 id="profilePopupTitle">Profile Feed</h3>
+                    <p id="profilePopupDescription">View your donations, activity, and notifications in a popup.</p>
+                </div>
+                <button class="btn btn-secondary profile-popup-close" onclick="app.closeProfilePopup()">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div id="profilePopupBody" class="profile-popup-body"></div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay" style="display:none;"> 
+        <div class="loader"></div>
+        <p>Finding nearby matches...</p>
+    </div>
+
+    <button class="floating-emergency-btn" onclick="app.showSection('urgent-requests')" aria-label="Emergency Broadcast">
+        <i class="ph ph-flame"></i>
+        <span>Emergency</span>
+    </button>
+
+    <nav class="mobile-bottom-nav">
+        <button class="mobile-nav-btn" onclick="app.showSection('home')"><i class="ph ph-house-simple"></i><span>Home</span></button>
+        <button class="mobile-nav-btn" onclick="app.showSection('request')"><i class="ph ph-magnifying-glass"></i><span>Search</span></button>
+        <button class="mobile-nav-btn" onclick="app.showSection('urgent-requests')"><i class="ph ph-flame"></i><span>Emergency</span></button>
+        <button class="mobile-nav-btn" onclick="app.showSection('profile')"><i class="ph ph-user-circle"></i><span>Profile</span></button>
+    </nav>
+
+    <button class="ai-assistant-trigger" onclick="app.toggleChatAssistant()" aria-label="Open AI Assistant">
+        <img class="ai-trigger-avatar" src="https://static.vecteezy.com/system/resources/previews/067/604/646/non_2x/ai-icon-ai-personal-assistant-chatbot-avatar-friendly-robot-face-with-chat-bubble-ui-education-isometric-design-style-vector.jpg" alt="Assistant">
+    </button>
+    <div id="aiAssistantPanel" class="ai-assistant-panel">
+        <div class="ai-chat-header">
+            <div style="display:flex; gap:10px; align-items:center;">
+                <img class="ai-header-avatar" src="https://static.vecteezy.com/system/resources/previews/067/604/646/non_2x/ai-icon-ai-personal-assistant-chatbot-avatar-friendly-robot-face-with-chat-bubble-ui-education-isometric-design-style-vector.jpg" alt="Assistant">
+                <div>
+                    <strong>AI Assistant</strong>
+                    <p>Ask about donors, compatibility, or urgent requests.</p>
+                </div>
+            </div>
+            <button class="ai-close-btn" onclick="app.toggleChatAssistant()"><i class="ph ph-x"></i></button>
+        </div>
+        <div id="aiChatBody" class="ai-chat-body"></div>
+        <div id="aiChatSuggestions" class="ai-chat-suggestions"></div>
+        <div class="ai-chat-footer">
+            <input type="text" class="ai-input" placeholder="Ask me to find donors or urgent requests..."
+                onkeydown="if(event.key==='Enter'){app.sendChatMessage();}">
+            <button class="btn btn-primary ai-send-btn" onclick="app.sendChatMessage()"><i
+                    class="ph ph-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+
+    <!-- Leaflet JS for Maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>
