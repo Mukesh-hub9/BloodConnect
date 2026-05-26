@@ -394,7 +394,7 @@ const app = {
 
     async loadDonors() {
         try {
-            const response = await fetch('http://localhost:3000/api/donors');
+            const response = await fetch('/api/donors');
             const data = await response.json();
             this.state.donors = data.donors || [];
             this.state.offlineMode = false;
@@ -414,7 +414,7 @@ const app = {
     async loadRequests() {
         try {
             if (this.state.offlineMode) throw new Error("Offline Mode active");
-            const response = await fetch('http://localhost:3000/api/requests');
+            const response = await fetch('/api/requests');
             const data = await response.json();
             this.state.requests = data.requests || [];
         } catch (error) {
@@ -613,7 +613,7 @@ const app = {
                         let registered = false;
                         if (!app.state.offlineMode) {
                             try {
-                                const response = await fetch('http://localhost:3000/api/donors', {
+                                const response = await fetch('/api/donors', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(newDonor)
@@ -731,7 +731,7 @@ const app = {
         let searchedDonors = [];
         try {
             if (this.state.offlineMode) throw new Error("Offline mode active");
-            const res = await fetch(`http://localhost:3000/api/donors?blood_group=${encodeURIComponent(bloodInput)}&city=${encodeURIComponent(cityInput)}&compatible=${compatibilityChecked}`);
+            const res = await fetch(`/api/donors?blood_group=${encodeURIComponent(bloodInput)}&city=${encodeURIComponent(cityInput)}&compatible=${compatibilityChecked}`);
             const data = await res.json();
             searchedDonors = data.donors || [];
         } catch (error) {
@@ -864,7 +864,6 @@ const app = {
         const centerLng = this.state.userLocation ? this.state.userLocation.lng : 81.8040;
 
         this.state.map = L.map('map').setView([centerLat, centerLng], 12);
-
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(this.state.map);
@@ -976,7 +975,7 @@ const app = {
                 let success = false;
                 if (!app.state.offlineMode) {
                     try {
-                        const response = await fetch('http://localhost:3000/api/requests', {
+                        const response = await fetch('/api/requests', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -1259,7 +1258,7 @@ const app = {
 
         if (!this.state.offlineMode) {
             try {
-                const response = await fetch(`http://localhost:3000/api/requests/${id}`, {
+                const response = await fetch(`/api/requests/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'Fulfilled' })
@@ -1402,7 +1401,7 @@ const app = {
             let donors = [];
             if (!this.state.offlineMode) {
                 try {
-                    const res = await fetch('http://localhost:3000/api/admin/donors');
+                    const res = await fetch('/api/admin/donors');
                     const data = await res.json();
                     donors = data.donors || [];
                 } catch (e) {
@@ -1449,7 +1448,7 @@ const app = {
             let reqs = [];
             if (!this.state.offlineMode) {
                 try {
-                    const res = await fetch('http://localhost:3000/api/requests?status=all');
+                    const res = await fetch('/api/requests?status=all');
                     const data = await res.json();
                     reqs = data.requests || [];
                 } catch (e) {}
